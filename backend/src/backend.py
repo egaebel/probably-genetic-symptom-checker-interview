@@ -39,7 +39,7 @@ app = Flask(__name__)
 CORS(app)
 app_state: AppState = AppState()
 
-NUM_DISORDER_CANDIDATES: int = 20
+NUM_DISORDER_CANDIDATES: int = 200000
 SYMPTOMS_KEY: str = "symptoms"
 
 
@@ -56,9 +56,11 @@ def get_disorder_candidates():
         ] = analysis.compute_p_disorders_conditioned_on_symptoms(
             app_state.disorders, app_state.symptom_name_to_metadata, symptom_names
         )
-    except Exception:
-        stack_trace: str = traceback.format_exc()
-        print(f"ERROR: 500 error raised!\nStacktrace:\n{stack_trace}")
+    except Exception as e:
+        stack_trace: str = "\n".join(
+            traceback.format_exception(type(e), e, e.__traceback__)
+        )
+        print(f"ERROR: 500 error raised!\nStacktrace:\n{stack_trace}", flush=True)
         raise ServiceUnavailable(
             f"ERROR: Unexpected error occurred while processing symptoms: '{symptom_names}'",
         )
@@ -81,7 +83,7 @@ def get_disorder_candidates():
             disorder_candidates,
         )
     )
-    print(f"Returning: '{disorder_names_with_probs}'")
+    # print(f"Returning: '{disorder_names_with_probs}'")
     return jsonify({"disorders": disorder_names_with_probs})
 
 
@@ -102,9 +104,13 @@ def init():
     app_state.sympotom_names = analysis.get_symptom_names(
         app_state.symptom_name_to_metadata
     )
-    print(
-        f"disorders Beta-mannosidosis: '{list(filter(lambda x: x.name == 'Beta-mannosidosis', app_state.disorders))}'"
-    )
+    # symptom_name_to_metadata_str: str = "\n".join(
+    #     map(
+    #         lambda x: str(x),
+    #         sorted(app_state.symptom_name_to_metadata.items(), key=lambda x: x[0]),
+    #     )
+    # )
+    # print(f"app_state.symptom_name_to_metadata: '{symptom_name_to_metadata_str}'")
     print(
         f"Loaded '{len(app_state.disorders)}' disorders and "
         f"'{len(app_state.sympotom_names)}' symptoms into app state!"

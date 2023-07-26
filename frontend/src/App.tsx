@@ -21,23 +21,21 @@ const backButtonStyle: React.CSSProperties = {
 };
 const disorderHeadingStyle: React.CSSProperties = {
     display: "block",
-    fontSize: "15pt",
+    fontSize: "18pt",
     padding: "0.25em 0em 1em 1em",
     textAlign: "center"
 };
 const disorderStyle: React.CSSProperties = {
-    display: "flex",
-    flexWrap: "wrap",
-    fontSize: "12pt",
-    justifyContent: "center",
-    padding: "0.25em",
-
     background: "#f8f6f3",
     border: "0.175em solid",
-    borderColor: "#e78b86",
+    borderColor: "#8b5167",
     borderRadius: "1.25em",
     color: "#333333",
-    margin: "0.25em",
+    fontSize: "14pt",
+    justifyContent: "center",
+    margin: "0.25em auto 0.25em auto",
+    padding: "0.25em",
+    width: "40vw",
 };
 const headerStyle: React.CSSProperties = {
     backgroundColor: "#e78b86",
@@ -76,12 +74,13 @@ const symptomStyle: React.CSSProperties = {
     borderColor: "#e78b86",
     borderRadius: "1.25em",
     color: "#333333",
+    fontSize: "14pt",
     margin: "0.25em",
     padding: "1em"
 };
 const symptomSelectionHeadingStyle: React.CSSProperties = {
     display: "block",
-    fontSize: "15pt",
+    fontSize: "18pt",
     padding: "0.25em 0em 1em 1em",
     textAlign: "center"
 };
@@ -201,7 +200,11 @@ function App() {
             (disorderProb, index) => {
                 console.log(`disorderProbLoop:  ${disorderProb} ${disorderProb.name}: ${disorderProb.pDisorderLow} - ${disorderProb.pDisorderHigh}`);
                 return <div key={index} style={disorderStyle}>
-                    {`${disorderProb.name}: ${disorderProb.pDisorderLow} - ${disorderProb.pDisorderHigh}\n${disorderProb.associatedSymptoms}\n`}
+                    {`${disorderProb.name}`}
+                    <br />
+                    {`Prob: ${disorderProb.pDisorderLow} - ${disorderProb.pDisorderHigh}`}
+                    <br />
+                    {`Associated Symptoms: ${disorderProb.associatedSymptoms}`}
                 </div>;
             });
         activeViewBlock = (

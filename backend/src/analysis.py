@@ -121,8 +121,10 @@ def compute_p_disorders_conditioned_on_symptoms(
     disorders_conditioned: List[Tuple[Disorder, float, float]] = [
         (
             disorder,
-            p_midpoint_norm - ((p_midpoint_norm - p_low) / p_disorder_midpoint_sum),
-            p_midpoint_norm + ((p_high - p_midpoint_norm) / p_disorder_midpoint_sum),
+            p_low,
+            p_high,
+            # p_midpoint_norm - ((p_midpoint_norm - p_low) / p_disorder_midpoint_sum),
+            # p_midpoint_norm + ((p_high - p_midpoint_norm) / p_disorder_midpoint_sum),
         )
         for disorder, p_low, p_high, p_midpoint_norm in disorders_conditioned_with_midpoint
     ]
@@ -166,15 +168,22 @@ def compute_p_disorder(
         p_symptoms_given_disorder_low *= symptom.frequency_range[0]
         p_symptoms_given_disorder_high *= symptom.frequency_range[1]
 
-    p_symptoms_joint: float = compute_p_symptoms_joint(
-        symptom_name_to_metadata, symptom_names
+    # p_symptoms_joint: float = compute_p_symptoms_joint(
+    #     symptom_name_to_metadata, symptom_names
+    # )
+    p_symptoms_joint_range: Tuple[float, float] = compute_p_symptoms_joint_better(
+        disorder, symptom_name_to_metadata, symptom_names
     )
     p_disorder = 1.0 / float(total_num_disorders)
 
-    p_low: float = p_symptoms_given_disorder_low * p_disorder / p_symptoms_joint
-    p_high: float = p_symptoms_given_disorder_high * p_disorder / p_symptoms_joint
+    p_low: float = (
+        p_symptoms_given_disorder_low * p_disorder / p_symptoms_joint_range[0]
+    )
+    p_high: float = (
+        p_symptoms_given_disorder_high * p_disorder / p_symptoms_joint_range[1]
+    )
 
-    if p_high > 1.0 or p_low > 1.0:
+    if p_high > 1.0 or p_high < 0.0 or p_low > 1.0 or p_low < 0.0:
         disorder_symptom_freq_ranges: List[Tuple[float, float]] = list(
             map(lambda x: x.frequency_range, disorder_symptoms)
         )
@@ -185,7 +194,7 @@ def compute_p_disorder(
             f"p_symptoms_given_disorder_low: '{p_symptoms_given_disorder_low}'\n"
             f"p_symptoms_given_disorder_high: '{p_symptoms_given_disorder_high}'\n"
             f"p_disorder: '{p_disorder}'\n"
-            f"p_symptoms_joint: '{p_symptoms_joint}'\n"
+            f"p_symptoms_joint_range: '{p_symptoms_joint_range}'\n"
             f"p_symptoms_given_disorder_low * p_disorder: '{p_symptoms_given_disorder_low * p_disorder}'\n"
             f"p_symptoms_given_disorder_high * p_disorder: '{p_symptoms_given_disorder_high * p_disorder}'\n"
             f"disorder_symptom_freq_ranges: '{disorder_symptom_freq_ranges}'\n\n"
@@ -238,24 +247,69 @@ def compute_p_symptoms_joint(
 
 
 def compute_p_symptoms_joint_better(
-    symptom_name_to_metadata: Dict[str, SymptomMetadata], symptom_names: List[str]
-) -> float:
+    disorder: Disorder,
+    symptom_name_to_metadata: Dict[str, SymptomMetadata],
+    symptom_names: List[str],
+) -> Tuple[float, float]:
     """
-    Lookup p_symptom for all the symptoms in symptom_names and multiply them together
-    to get the joint probability. Independence between symptoms is assumed.
+    Compute p(symptom_1, symptom_2, ..., symptom_n) by multipying together the conditional
+    probabilities conditioned on the disorder:
 
-    Each symptom's marginal probability, p_symptom, has been estimated by calculating:
-        p_symptom = num_disorders_symptom_occurs_in / total_num_disorders
+    p(symptom_1 | disorder) p(symptom_2 | disorder) ... p(symptom_n | disorder)
+
+    In actuallity, log probabilites are added together and then exponeniated in case there
+    are issues with numerical stability.
     """
-    return math.exp(
-        functools.reduce(
-            lambda x, y: x + y,
+    p_joint_low: float = math.exp(
+        sum(
             map(
-                lambda x: math.log(symptom_name_to_metadata[x.lower()].p_symptom),
-                symptom_names,
-            ),
+                lambda p_symptom: math.log(p_symptom),
+                filter(
+                    lambda p_symptom: p_symptom > 0.0,
+                    map(
+                        lambda symptom_metadata: symptom_metadata.p_symptom_conditioned_on_disorder_low.get(
+                            disorder.name.lower(), 0.0
+                        ),
+                        map(
+                            lambda symptom_name: symptom_name_to_metadata[
+                                symptom_name.lower()
+                            ],
+                            symptom_names,
+                        ),
+                    ),
+                ),
+            )
         )
     )
+    p_joint_high: float = math.exp(
+        sum(
+            map(
+                lambda p_symptom: math.log(p_symptom),
+                filter(
+                    lambda p_symptom: p_symptom > 0.0,
+                    map(
+                        lambda symptom_metadata: symptom_metadata.p_symptom_conditioned_on_disorder_high.get(
+                            disorder.name.lower(), 0.0
+                        ),
+                        map(
+                            lambda symptom_name: symptom_name_to_metadata[
+                                symptom_name.lower()
+                            ],
+                            symptom_names,
+                        ),
+                    ),
+                ),
+            )
+        )
+    )
+    if p_joint_low < 0.0 or p_joint_high < 0.0:
+        print(
+            f"ERROR: For disorder: '{disorder.name}'\n"
+            f"p_joint_low: '{p_joint_low}'\n"
+            f"p_joint_high: '{p_joint_high}'\n"
+            f"symptom_names: '{symptom_names}'"
+        )
+    return (p_joint_low, p_joint_high)
 
 
 def compute_symptom_metadata(disorders: List[Disorder]) -> Dict[str, SymptomMetadata]:
@@ -271,27 +325,28 @@ def compute_symptom_metadata(disorders: List[Disorder]) -> Dict[str, SymptomMeta
         disorder_key: str = disorder.name.lower()
         for symptom in disorder.symptoms:
             symptom_key: str = symptom.name.lower()
+            symptom_metadata: SymptomMetadata
             if symptom_key not in symptom_name_to_metadata:
-                p_symptom_conditioned_on_disorder_low: Dict[str, float] = dict()
-                p_symptom_conditioned_on_disorder_high: Dict[str, float] = dict()
-                p_symptom_conditioned_on_disorder_low[
-                    disorder_key
-                ] = symptom.frequency_range[0]
-                p_symptom_conditioned_on_disorder_high[
-                    disorder_key
-                ] = symptom.frequency_range[1]
-                symptom_metadata: SymptomMetadata = SymptomMetadata(
+                symptom_metadata = SymptomMetadata(
                     disorder_names=set(),
                     id=symptom.id,
                     name=symptom.name,
                     p_symptom=-1,
-                    p_symptom_conditioned_on_disorder_low=p_symptom_conditioned_on_disorder_low,
-                    p_symptom_conditioned_on_disorder_high=p_symptom_conditioned_on_disorder_high,
+                    p_symptom_conditioned_on_disorder_low=dict(),
+                    p_symptom_conditioned_on_disorder_high=dict(),
                 )
                 symptom_name_to_metadata[symptom_key] = symptom_metadata
-            symptom_name_to_metadata[symptom_key].disorder_names.add(
-                disorder.name.lower()
-            )
+            else:
+                symptom_metadata = symptom_name_to_metadata[symptom_key]
+            symptom_metadata.disorder_names.add(disorder_key)
+
+            # Add p(symptom | disorder) to maps for low/high end of range.
+            symptom_metadata.p_symptom_conditioned_on_disorder_low[
+                disorder_key
+            ] = symptom.frequency_range[0]
+            symptom_metadata.p_symptom_conditioned_on_disorder_high[
+                disorder_key
+            ] = symptom.frequency_range[1]
     for symptom_metadata in symptom_name_to_metadata.values():
         symptom_metadata.p_symptom = float(symptom_metadata.num_disorders()) / float(
             len(disorders)
@@ -458,13 +513,6 @@ if __name__ == "__main__":
     symptom_name_to_metadata: Dict[str, SymptomMetadata] = compute_symptom_metadata(
         disorders
     )
-    symptom_cooccurrence: Dict[str, Dict[str, float]] = compute_symptom_cooccurrence(
-        disorder_name_to_disorder, symptom_name_to_metadata
-    )
-    compute_p_symptoms_joint_co_occurrence(
-        symptom_name_to_metadata, symptom_cooccurrence
-    )
-
     disorders_conditioned: List[
         Tuple[Disorder, float, float]
     ] = compute_p_disorders_conditioned_on_symptoms(
