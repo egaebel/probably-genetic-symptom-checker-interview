@@ -2,10 +2,94 @@ import axios from 'axios';
 import { useEffect, useState } from "react";
 import './App.css';
 
+interface DisorderProbs {
+    associatedSymptoms: Array<string>,
+    name: string,
+    pDisorderLow: Number,
+    pDisorderHigh: Number,
+}
+
+const backButtonStyle: React.CSSProperties = {
+    background: "#9bccc8",
+    border: "0.2em solid",
+    borderColor: "#789e9b",
+    borderRadius: "1.25em",
+    margin: "1.5em 0em 1.5em 1.5em",
+    padding: "0.5em",
+    textAlign: "center",
+    width: "5vw",
+};
+const disorderHeadingStyle: React.CSSProperties = {
+    display: "block",
+    fontSize: "15pt",
+    padding: "0.25em 0em 1em 1em",
+    textAlign: "center"
+};
+const disorderStyle: React.CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap",
+    fontSize: "12pt",
+    justifyContent: "center",
+    padding: "0.25em",
+
+    background: "#f8f6f3",
+    border: "0.175em solid",
+    borderColor: "#e78b86",
+    borderRadius: "1.25em",
+    color: "#333333",
+    margin: "0.25em",
+};
+const headerStyle: React.CSSProperties = {
+    backgroundColor: "#e78b86",
+    fontSize: "26pt",
+    height: "10vh",
+    lineHeight: "10vh",
+    textAlign: "center"
+};
+const symptomButtonStyle: React.CSSProperties = {
+    background: "#9bccc8",
+    border: "0.2em solid",
+    borderColor: "#789e9b",
+    borderRadius: "1.25em",
+    margin: "0.25em 0.25em 1.5em 0.25em",
+    padding: "0.9em 2.5em"
+};
+const symptomListStyle: React.CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center"
+};
+const symptomSearchStyle: React.CSSProperties = {
+    borderColor: "#e78b86",
+    borderRadius: "0.5em",
+    color: "#333333",
+    display: "block",
+    fontSize: "18pt",
+    lineHeight: "2vh",
+    margin: "2em auto 1em auto",
+    padding: "0.25em 0.25em 0.25em 0.5em",
+    width: "45%"
+};
+const symptomStyle: React.CSSProperties = {
+    background: "#f8f6f3",
+    border: "0.175em solid",
+    borderColor: "#e78b86",
+    borderRadius: "1.25em",
+    color: "#333333",
+    margin: "0.25em",
+    padding: "1em"
+};
+const symptomSelectionHeadingStyle: React.CSSProperties = {
+    display: "block",
+    fontSize: "15pt",
+    padding: "0.25em 0em 1em 1em",
+    textAlign: "center"
+};
+
 function App() {
     const apiUrl = process.env.REACT_APP_URL;
     const [curSymptomSearchText, setCurSymptomSearchText] = useState<string>("");
-    const [disorders, setDisorders] = useState<Array<string>>([])
+    const [disorders, setDisorders] = useState<Array<DisorderProbs>>([])
     const [filteredSymptoms, setFilteredSymptoms] = useState<Array<string>>([]);
     const [selectedSymptoms, setSelectedSymptoms] = useState<Array<string>>([]);
     const [disorderViewActive, setDisorderViewActive] = useState<Boolean>(false);
@@ -39,12 +123,12 @@ function App() {
         retrieveSymptoms()
     }, [apiUrl, symptomsLength]);
 
-    const searchSymptoms = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const symptomText = event.target.value.trim()
+    const searchSymptomsOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const symptomText = event.target.value;
         if (symptomText.length > curSymptomSearchText.length) {
-            setFilteredSymptoms(filteredSymptoms.filter(symptomName => symptomName.toLowerCase().startsWith(symptomText.toLowerCase())));
+            setFilteredSymptoms(filteredSymptoms.filter(symptomName => symptomName.toLowerCase().includes(symptomText.toLowerCase())));
         } else {
-            setFilteredSymptoms(symptoms.filter(symptomName => symptomName.toLowerCase().startsWith(symptomText.toLowerCase())));
+            setFilteredSymptoms(symptoms.filter(symptomName => symptomName.toLowerCase().includes(symptomText.toLowerCase())));
         }
         setCurSymptomSearchText(symptomText);
     }
@@ -57,6 +141,14 @@ function App() {
         }
         setSelectedSymptoms([...selectedSymptoms, selectedSymptom].sort());
         setFilteredSymptoms(filteredSymptoms.filter(symptomName => symptomName !== selectedSymptom))
+    };
+    const clearInputBoxOnClick = async () => {
+        setCurSymptomSearchText("");
+        setFilteredSymptoms(symptoms);
+    }
+    const clearOnClick = async () => {
+        setFilteredSymptoms([...filteredSymptoms, ...selectedSymptoms].sort());
+        setSelectedSymptoms([]);
     };
     const disorderViewBackOnClick = (event: React.MouseEvent<HTMLDivElement>) => {
         setDisorderViewActive(false);
@@ -89,80 +181,50 @@ function App() {
                 "disorderCandidatesResponse.status: '%d' disorderCandidatesResponse.data: '%s'",
                 disorderCandidatesResponse.status, disorderCandidatesResponse.data);
         } else {
-            const retrievedDisorders: Array<string> = disorderCandidatesResponse.data["disorders"];
+            const retrievedDisorders: Array<DisorderProbs> = disorderCandidatesResponse.data["disorders"];
+            console.log(`retrievedDisorders: '${retrievedDisorders}'`)
             setDisorders(retrievedDisorders);
         }
     }
 
 
-    const backStyle: React.CSSProperties = {
-        padding: "1.5em 0em 0em 1.5em",
-        textAlign: "left",
-    };
-    const disorderStyle: React.CSSProperties = {
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "center"
-    };
-    const headerStyle: React.CSSProperties = {
-        backgroundColor: "#e78b86",
-        fontSize: "26pt",
-        height: "10vh",
-        lineHeight: "10vh",
-        textAlign: "center"
-    };
-    const submitButtonStyle: React.CSSProperties = {
-        background: "#9bccc8",
-        border: "0.2em solid",
-        borderColor: "#789e9b",
-        borderRadius: "1.25em",
-        margin: "0.25em",
-        padding: "0.9em 2.5em"
-    };
-    const symptomListStyle: React.CSSProperties = {
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "center"
-    };
-    const symptomSearchStyle: React.CSSProperties = {
-        display: "block",
-        margin: "2em auto 1em auto",
-        width: "45%"
-    };
-    const symptomStyle: React.CSSProperties = {
-        background: "#9bccc8",
-        border: "0.2em solid",
-        borderColor: "#789e9b",
-        borderRadius: "1.25em",
-        margin: "0.25em",
-        padding: "1em"
-    };
-    const symptomSelectionHeadingStyle: React.CSSProperties = {
-        display: "block",
-        fontSize: "15pt",
-        padding: "0.25em 0em 1em 1em",
-        textAlign: "left"
-    };
-
     let activeViewBlock: JSX.Element
-    let disorderViewBackElement: JSX.Element = <div />;
     if (disorderViewActive) {
-        disorderViewBackElement = (<div onClick={disorderViewBackOnClick} style={backStyle}>
-            Back
-        </div>);
-        const disorderElements: Array<JSX.Element> = disorders.map(
+        // TODO: Factor into separate react component.
+        const selectedSymptomElements: Array<JSX.Element> = selectedSymptoms.map(
             (text, index) =>
-                <div key={index} style={disorderStyle}>
+                <div key={index} style={symptomStyle}>
                     {text}
                 </div>);
+        console.log(`Disorders: '${disorders}'`)
+        const disorderElements: Array<JSX.Element> = disorders.map(
+            (disorderProb, index) => {
+                console.log(`disorderProbLoop:  ${disorderProb} ${disorderProb.name}: ${disorderProb.pDisorderLow} - ${disorderProb.pDisorderHigh}`);
+                return <div key={index} style={disorderStyle}>
+                    {`${disorderProb.name}: ${disorderProb.pDisorderLow} - ${disorderProb.pDisorderHigh}\n${disorderProb.associatedSymptoms}\n`}
+                </div>;
+            });
         activeViewBlock = (
-            <div>
-                <text style={symptomSelectionHeadingStyle}>Disorders</text>
-                <hr />
-                {disorderElements}
+            <div style={{ display: "flex", flexDirection: "column" }}>
+                <div onClick={disorderViewBackOnClick} style={backButtonStyle}>
+                    Back
+                </div>
+
+                <div>
+                    <text style={symptomSelectionHeadingStyle}>Selected Symptoms</text>
+                    <div style={symptomListStyle}>
+                        {selectedSymptomElements}
+                    </div>
+                    <hr />
+                    <text style={disorderHeadingStyle}>Disorders</text>
+                    <hr />
+                    <br />
+                    {disorderElements}
+                </div>
             </div>
         );
     } else {
+        // TODO: Factor into separate react component.
         const availableSymptoms = filteredSymptoms.slice(0, 200);
         const availableSymptomElements: Array<JSX.Element> = availableSymptoms.map(
             (text, index) =>
@@ -176,7 +238,19 @@ function App() {
                 </div>);
         activeViewBlock = (
             <div>
+                <input
+                    onChange={searchSymptomsOnChange}
+                    onMouseOver={() => ({})}
+                    placeholder="Search for symptoms"
+                    style={symptomSearchStyle}
+                    type="text"
+                    value={curSymptomSearchText}
+                />
+                <button onClick={clearInputBoxOnClick} style={symptomButtonStyle}>Clear Search</button>
+                <hr />
                 <text style={symptomSelectionHeadingStyle}>Selected Symptoms</text>
+                <button onClick={clearOnClick} style={symptomButtonStyle}>Clear Symptoms</button>
+                <button onClick={submitOnClick} style={symptomButtonStyle}>Submit</button>
                 <div style={symptomListStyle}>
                     {selectedSymptomElements}
                 </div>
@@ -194,16 +268,6 @@ function App() {
     return (
         <div className="App">
             <header style={headerStyle}>Symptom Checker </header>
-            {disorderViewBackElement}
-            <input
-                onChange={searchSymptoms}
-                onMouseOver={() => ({})}
-                placeholder="Search for symptoms"
-                style={symptomSearchStyle}
-                value={curSymptomSearchText}
-            />
-            <button onClick={submitOnClick} style={submitButtonStyle}>Submit</button>
-            <hr />
             {activeViewBlock}
         </div >
     );

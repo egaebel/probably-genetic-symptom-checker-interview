@@ -2,3 +2,5 @@ backend/bin
 backend/lib
 backend/pyvenv.cfg
 frontend/node_modules
+backend/src/out.txt
+backend/src/__pycache__/analysis.cpython-38.pyc
