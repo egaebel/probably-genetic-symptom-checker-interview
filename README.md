@@ -26,6 +26,12 @@ cd ..
 ./run-local
 ```
 
+# Usage Instructions
+* Search for symptoms with the search bar.
+* Select or deselect symptoms by clicking.
+* When you have selected the symptoms you want, click submit to get probable disorders.
+* Press back to get back to the symptom search/selection page.
+
 # Future Directions
 * Gather better data: Lots of assumptions were made about disorder probability that could be drastically improved  with data from the real-world about the probability of these disorders occurring.
 * Testing for the backend: Ultimately I was crunched for time and did not have time to write unit tests for the backend.
