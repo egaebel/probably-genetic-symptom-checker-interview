@@ -258,49 +258,6 @@ def compute_p_symptoms_joint_better(
     )
 
 
-def compute_p_symptoms_joint_co_occurrence(
-    symptom_name_to_metadata: Dict[str, SymptomMetadata],
-    symptom_cooccurrence: Dict[str, Dict[str, float]],
-) -> float:
-    for r in range(1, len(symptom_name_to_metadata) + 1):
-        for symptom_combination in itertools.combinations(symptom_name_to_metadata, r):
-            p = 1
-            for s1, s2 in itertools.combinations(symptom_combination, 2):
-                p *= symptom_cooccurrence[s1][s2]
-            # print(f"p({', '.join(symptom_combination)}) = {p}")
-    return 0.0
-
-
-def compute_symptom_cooccurrence(
-    disorder_name_to_disorder: Dict[str, Disorder],
-    symptom_name_to_metadata: Dict[str, SymptomMetadata],
-) -> Dict[str, Dict[str, float]]:
-    symptom_cooccurrence: DefaultDict[str, DefaultDict[str, float]] = defaultdict(
-        lambda: defaultdict(float)
-    )
-
-    # We go through every symptom
-    for symptom_name, symptom_metadata in symptom_name_to_metadata.items():
-        # For every disorder that the symptom is present in
-        for disorder in symptom_metadata.disorder_names:
-            # We count the occurrence of every other symptom in that disorder
-            for other_symptom in disorder_name_to_disorder[disorder.lower()].symptoms:
-                other_symptom_name: str = other_symptom.name
-                if symptom_name.lower() != other_symptom_name.lower():
-                    symptom_cooccurrence[symptom_name.lower()][
-                        other_symptom_name.lower()
-                    ] += 1
-
-    # Convert counts into probabilities
-    for symptom_name, co_occurrences in symptom_cooccurrence.items():
-        for other_symptom_name, count in co_occurrences.items():
-            symptom_cooccurrence[symptom_name.lower()][
-                other_symptom_name.lower()
-            ] = count / len(symptom_name_to_metadata[symptom_name].disorder_names)
-
-    return dict(symptom_cooccurrence)
-
-
 def compute_symptom_metadata(disorders: List[Disorder]) -> Dict[str, SymptomMetadata]:
     """
     For each symptom in the dataset calculate p_symptom and the disorders
