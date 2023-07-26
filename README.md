@@ -1,3 +1,26 @@
+# Run Instructions
+1. Navigate to the root directory.
+2. Set up a virtual environment in the backend directory
+```virtualenv --python=python3 backend```
+3. Activate the virtual environment with:\
+```source backend/bin/activate```
+4. Install the required packages from requirements.txt with: 
+```pip install -r backend/requirements.txt```
+5. Navigate to the frontend directory.
+```cd frontend```
+6. Install the npm packages in the frontend directory with:
+```npm install```
+7. Navigate to the root-directory of the project and run the startup script: 
+```
+cd ..
+./run-local
+```
+
+# Future Directions
+* Gather better data: Lots of assumptions were made about disorder probability that could be drastically improved  with data from the real-world about the probability of these disorders occurring.
+* Testing for the backend: Ultimately I was crunched for time and did not have time to write unit tests for the backend.
+* Testing for the frontend: I don't have experience with frontend testing frameworks, but acquiring that experience and testing the frontend would be a great addition.
+
 # Coding Project:
 
 Your task is to build a mini symptom checker. The goal is to figure out which rare conditions a user has, given the symptoms they input. Your task is as follows:
