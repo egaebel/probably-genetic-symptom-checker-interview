@@ -1,17 +1,27 @@
 # Run Instructions
-1. Navigate to the root directory.
+1. Navigate to the root directory of the project which contains the frontend/ and backend/ folders along with this README.
 2. Set up a virtual environment in the backend directory
-```virtualenv --python=python3 backend```
-3. Activate the virtual environment with:\
-```source backend/bin/activate```
-4. Install the required packages from requirements.txt with: 
-```pip install -r backend/requirements.txt```
-5. Navigate to the frontend directory.
-```cd frontend```
-6. Install the npm packages in the frontend directory with:
-```npm install```
-7. Navigate to the root-directory of the project and run the startup script: 
+```shell
+virtualenv --python=python3 backend
 ```
+3. Activate the virtual environment with:\
+```shell
+source backend/bin/activate
+```
+4. Install the required packages from requirements.txt with: 
+```shell
+pip install -r backend/requirements.txt
+```
+5. Navigate to the frontend directory.
+```shell
+cd frontend
+```
+6. Install the npm packages in the frontend directory with:
+```shell
+npm install
+```
+7. Navigate to the root-directory of the project and run the startup script: 
+```shell
 cd ..
 ./run-local
 ```

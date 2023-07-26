@@ -1,5 +1,4 @@
 backend/bin
 backend/lib
 backend/pyvenv.cfg
-frontend/.env.development
 frontend/node_modules
