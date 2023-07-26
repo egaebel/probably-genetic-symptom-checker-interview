@@ -30,6 +30,8 @@ cd ..
 * Gather better data: Lots of assumptions were made about disorder probability that could be drastically improved  with data from the real-world about the probability of these disorders occurring.
 * Testing for the backend: Ultimately I was crunched for time and did not have time to write unit tests for the backend.
 * Testing for the frontend: I don't have experience with frontend testing frameworks, but acquiring that experience and testing the frontend would be a great addition.
+* Breaking out frontend code into separate components: There are a few chunks of code that could be better organized by being placed into their own components.
+* Design polish in frontend: Some things like adding logos, custom fonts, etc would improve the look of the project.
 
 # Coding Project:
 
